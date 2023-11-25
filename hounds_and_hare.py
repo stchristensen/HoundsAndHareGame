@@ -33,6 +33,7 @@ class HoundsAndHare:
         
         self.hounds = [0, 1, 7]
         self.hare = 10
+        self.move_count = 0 # Initialize move counter
         
     
     def display_board(self):
@@ -82,7 +83,7 @@ class HoundsAndHare:
         plt.show()
         
     def is_valid_move(self, current_position, new_position, player):
-        # Check if the new position is in th elist of connected positions
+        # Check if the new position is in the list of connected positions
         if new_position in self.board[current_position] and new_position not in self.hounds and new_position != self.hare:
             if player=='hound' and new_position in self.backward_moves.get(current_position, []):
                 return False
@@ -93,6 +94,7 @@ class HoundsAndHare:
         # Move a hound to a new position
         if self.is_valid_move(hound_position, new_position, 'hound'):
             self.hounds[self.hounds.index(hound_position)] = new_position
+            self.move_count += 1
             return True
         return False
     
@@ -100,13 +102,79 @@ class HoundsAndHare:
         # Move the hare to a new position
         if self.is_valid_move(self.hare, new_position, 'hare'):
             self.hare = new_position
+            self.move_count += 1
             return True
         return False
     
     def check_win(self):
         #check for a win or a draw
-        pass
+        # Check if the hare is trapped
+        if not any(self.is_valid_move(self.hare, pos, 'hare') for pos in self.board[self.hare]):
+            return 'Hounds', 1
+        
+        # If hare gets to position 0, that's a win for hare
+        if self.hare in [0]:
+            return 'Hare', 1
+        
+        if self.move_count >= 30:
+            return 'Draw', 0.5
+        return None, 0
+    
+    def encode_state(self):
+        # Create a vector with a default value for empty positions
+        state_vector = [0]*11
+        
+        # Mark postions occupied by hounds
+        for hound_pos in self.hounds:
+            state_vector[hound_pos] = 1
+            
+        # Makr the position occupied by the hare
+        state_vector[self.hare] = 2
+        
+        return state_vector
+    
+    def possible_hare_moves(self):
+        current_position = self.hare
+        return [(self.hare, pos) for pos in self.board[current_position] if pos not in self.hounds]
+    
+    def possible_hound_moves(self):
+        possible_moves = []
+        for hound in self.hounds:
+            for new_position in self.board[hound]:
+                # Check if the move is valid (not backward and not occupied)
+                if self.is_valid_move(hound, new_position, 'hound'):
+                    possible_moves.append((hound, new_position))
+        return possible_moves
+    
+    
     
     def play_game(self):
         # Main game loop
-        pass
+        turn = 'hound' # Hounds start the game
+        while True:
+            if turn == 'hound':
+                # Implement logic to choose and make a hound move
+                
+                turn = 'hare'
+            else:
+                # Implement logic to choose and make a hare move
+                
+                turn = 'hound'
+                
+            result = self.check_win()
+            if result is not None:
+                print(f"Game Over: {result}")
+                break
+            
+            if self.move_count >= 30:
+                print("Game Over: Draw")
+                break
+                
+                
+                
+                
+                
+                
+                
+                
+                
