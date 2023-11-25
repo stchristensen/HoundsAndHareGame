@@ -1,3 +1,5 @@
+# hounds_and_hare.py
+
 import networkx as nx
 import matplotlib.pyplot as plt
 
