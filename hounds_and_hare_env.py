@@ -3,6 +3,7 @@
 import gym
 from gym import spaces
 import numpy as np
+from hounds_and_hare import HoundsAndHare
 
 class HoundsAndHareEnv(gym.Env):
     def __init__(self):
@@ -12,7 +13,7 @@ class HoundsAndHareEnv(gym.Env):
         # They must by gym.spaces objects
         # Example when using discrete actions, you have two: move hound and move hare
         self.action_space = spaces.Discrete(3*11+1*11)  # 11 moves for each of the three hounds, and 11 moves for the hare
-        self.observation_space = spaces.Box(low=0, high=2, shape=(11,), dtype=np.int)
+        self.observation_space = spaces.Box(low=0, high=2, shape=(11,), dtype=np.int32)
         
         # Initialize state
         self.state = None
@@ -26,8 +27,8 @@ class HoundsAndHareEnv(gym.Env):
             hound_index = action // 11 # Determine which hound
             target_position = action % 11 # Determine which position
             # Check if the move is valid for the selected hound
-            if self.is_valid_move(self.hounds[hound_index], target_position, 'hound'):
-                self.move_hound(self.hounds[hound_index], target_position)
+            if self.game.is_valid_move(self.game.hounds[hound_index], target_position, 'hound'):
+                self.game.move_hound(self.game.hounds[hound_index], target_position)
             else: # else handle invalid hound move
                 reward = -1 # Penalty for an invalid move
                 done = True # Optionally end the episode (it will learn faster if it loses if it makes an illegal move?)
@@ -35,8 +36,8 @@ class HoundsAndHareEnv(gym.Env):
         else: # Hare moves
             target_position = action - 33
             # Check if the move is valid for the hare
-            if self.is_valid_move(selfhare, target_position, 'hare'):
-                self.move_hare(hare_move)           
+            if self.game.is_valid_move(self.game.hare, target_position, 'hare'):
+                self.game.move_hare(target_position)           
             else: # else handle invalid hare move
                 reward = -1 # Penalty for an invalid move
                 done = True # Optionally end the episode (it will learn faster if it loses if it makes an illegal move?)

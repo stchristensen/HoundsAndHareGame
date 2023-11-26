@@ -56,6 +56,7 @@ class HoundsAndHare:
                 
                 
     def visualize_board(self):
+        plt.figure(figsize=(4,2))  # (width, height) in inches
         G = nx.Graph()
         
         # Add nodes
@@ -69,19 +70,20 @@ class HoundsAndHare:
         
         positions = {
             0: (0, 0), 
-            1: (1, 0.5),
-            2: (2, 0.5),
-            3: (3, 0.5),
+            1: (1, 1),
+            2: (2, 1),
+            3: (3, 1),
             4: (1, 0),
             5: (2, 0),
             6: (3, 0),
-            7: (1, -0.5),
-            8: (2, -0.5),
-            9: (3, -0.5),
+            7: (1, -1),
+            8: (2, -1),
+            9: (3, -1),
             10: (4, 0)}
         
         node_colors = ['red' if node == self.hare else 'blue' if node in self.hounds else 'gray' for node in G.nodes()]
         nx.draw(G, pos=positions, with_labels=True, node_color=node_colors, node_size=800, font_size=10)
+        
         plt.show()
         
     def is_valid_move(self, current_position, new_position, player):
