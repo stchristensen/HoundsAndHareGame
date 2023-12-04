@@ -2,6 +2,7 @@
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
 
 class HoundsAndHare:
     def __init__(self):
@@ -36,6 +37,7 @@ class HoundsAndHare:
         self.hounds = [0, 1, 7]
         self.hare = 10
         self.move_count = 0 # Initialize move counter
+        self.current_player = "Hounds"
         
     
     def display_board(self):
@@ -88,32 +90,36 @@ class HoundsAndHare:
         
     def is_valid_move(self, current_position, new_position, player):
         # Check if the new position is in the list of connected positions
-        if new_position in self.board[current_position] and new_position not in self.hounds and new_position != self.hare:
-            if player=='hound' and new_position in self.backward_moves.get(current_position, []):
-                return False
-            return True
+        if player != self.current_player:  
+            return False  # not valid if wrong player
+        elif new_position in self.board[current_position] and new_position not in self.hounds and new_position != self.hare:
+            if player=='Hounds' and new_position in self.backward_moves.get(current_position, []):
+                return False  # Backwards hound move
+            return True  # valid move
         return False
         
     def move_hound(self, hound_position, new_position):
         # Move a hound to a new position
-        if self.is_valid_move(hound_position, new_position, 'hound'):
+        if self.is_valid_move(hound_position, new_position, 'Hounds'):
             self.hounds[self.hounds.index(hound_position)] = new_position
             self.move_count += 1
+            self.current_player = "Hare"
             return True
         return False
     
     def move_hare(self, new_position):
         # Move the hare to a new position
-        if self.is_valid_move(self.hare, new_position, 'hare'):
+        if self.is_valid_move(self.hare, new_position, 'Hare'):
             self.hare = new_position
             self.move_count += 1
+            self.current_player = "Hounds"
             return True
         return False
     
     def check_win(self):
         #check for a win or a draw
         # Check if the hare is trapped
-        if not any(self.is_valid_move(self.hare, pos, 'hare') for pos in self.board[self.hare]):
+        if not any(self.is_valid_move(self.hare, pos, 'Hare') for pos in self.board[self.hare]):
             return 'Hounds', 1
         
         # If hare gets to position 0, that's a win for hare
@@ -135,7 +141,7 @@ class HoundsAndHare:
         # Makr the position occupied by the hare
         state_vector[self.hare] = 2
         
-        return state_vector
+        return np.array(state_vector)
     
     def possible_hare_moves(self):
         current_position = self.hare
@@ -146,7 +152,7 @@ class HoundsAndHare:
         for hound in self.hounds:
             for new_position in self.board[hound]:
                 # Check if the move is valid (not backward and not occupied)
-                if self.is_valid_move(hound, new_position, 'hound'):
+                if self.is_valid_move(hound, new_position, 'Hounds'):
                     possible_moves.append((hound, new_position))
         return possible_moves
     
@@ -154,16 +160,16 @@ class HoundsAndHare:
     
     def play_game(self):
         # Main game loop
-        turn = 'hound' # Hounds start the game
+        turn = 'Hounds' # Hounds start the game
         while True:
-            if turn == 'hound':
+            if turn == 'Hounds':
                 # Implement logic to choose and make a hound move
                 
-                turn = 'hare'
+                turn = 'Hare'
             else:
                 # Implement logic to choose and make a hare move
                 
-                turn = 'hound'
+                turn = 'Hounds'
                 
             result = self.check_win()
             if result is not None:
