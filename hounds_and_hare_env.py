@@ -57,12 +57,13 @@ class HoundsAndHareEnv(gym.Env):
         # Update the state and check for end game
         self.state = self.game.encode_state()
         game_result, game_reward = self.game.check_win()
-        if reward == 0:
-            reward = game_reward
-            if game_result is not None:
-                done = true
-        
+        if game_result is not None:
+            done = true
+            if reward == 0:  # Only update the reward if it hasn't been set by an invalid move
+                reward = game_reward
+                
         return self.state, reward, done, info
+    
     
     def reset(self, seed=None, options=None):
         # Reset the state of the environment to an initial state

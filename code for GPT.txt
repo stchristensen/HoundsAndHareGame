@@ -1,0 +1,191 @@
+# hounds_and_hare_env.py
+
+import gym
+from gym import spaces
+import numpy as np
+from hounds_and_hare import HoundsAndHare
+
+class HoundsAndHareEnv(gym.Env):
+    def __init__(self):
+        super(HoundsAndHareEnv, self).__init__()
+        
+        # Define action and observation space
+        # They must by gym.spaces objects
+        # Example when using discrete actions, you have two: move hound and move hare
+        self.action_space = spaces.Discrete(3*11+1*11)  # 11 moves for each of the three hounds, and 11 moves for the hare
+        self.observation_space = spaces.Box(low=0, high=2, shape=(11,), dtype=np.int32)
+        
+        # Initialize state
+        self.state = None
+        
+    
+    
+    def step(self, action):
+        # Execute one time step within the environment
+        # Your game logic goes here
+        
+        reward = 0
+        done = False
+        info = {} # Additional data, not used for training
+        
+        # Decode action
+        if action < 33: # Hound moves
+            hound_index = action // 11 # Determine which hound
+            target_position = action % 11 # Determine which position
+            # Check if the move is valid for the selected hound
+            if self.game.is_valid_move(self.game.hounds[hound_index], target_position, 'Hounds'):
+                self.game.move_hound(self.game.hounds[hound_index], target_position)
+                info['message'] = f"Hound {hound_index} moves to {target_position}"
+                
+            else: # else handle invalid hound move
+                reward = -1 # Penalty for an invalid move
+                info['message'] = f"Invalid move by Hound {hound_index} to {target_position}"
+                done = True # Optionally end the episode (it will learn faster if it loses if it makes an illegal move?)
+        
+        else: # Hare moves
+            target_position = action - 33
+            # Check if the move is valid for the hare
+            if self.game.is_valid_move(self.game.hare, target_position, 'Hare'):
+                self.game.move_hare(target_position)
+                info['message'] = f"Hare moves to {target_position}"
+            else: # else handle invalid hare move
+                reward = -1 # Penalty for an invalid move
+                info['message'] = f"Invalid move by Hare to {target_position}"
+                done = True # Optionally end the episode (it will learn faster if it loses if it makes an illegal move?)
+        
+                    
+        # Update the state and check for end game
+        self.state = self.game.encode_state()
+        game_result, game_reward = self.game.check_win()
+        if reward == 0:
+            reward = game_reward
+            if game_result is not None:
+                done = true
+        
+        return self.state, reward, done, info
+    
+    def reset(self, seed=None, options=None):
+        # Reset the state of the environment to an initial state
+        # Initialize your game board here
+        super().reset(seed=seed)
+        info = {}
+        # Reset the game to its intial state
+        self.game = HoundsAndHare()
+        
+        # Reset other state variables
+        self.state = np.array(self.game.encode_state()) # Update the state
+                                  
+        return self.state, info
+    
+    def render(self, mode='human'):
+        # Render the environment to the screen
+        # You can use your display_board method here
+        if mode == 'human':
+            self.game.visualize_board()
+        elif mode == 'rgb_array':
+            pass                                  
+    
+    def close(self):
+        # Close the environment
+        pass
+    
+    
+    
+from hounds_and_hare import HoundsAndHare
+from hounds_and_hare_env import HoundsAndHareEnv
+import gym
+from gym.envs.registration import register
+
+from stable_baselines3 import DQN
+from stable_baselines3.common.env_util import make_vec_env
+
+
+
+register(
+    id='HoundsAndHareEnv-v0',
+    entry_point='hounds_and_hare_env:HoundsAndHareEnv',
+)
+
+
+env = make_vec_env('HoundsAndHareEnv-v0', n_envs=1)
+
+
+
+
+---------------------------------------------------------------------------
+NameNotFound                              Traceback (most recent call last)
+Cell In[4], line 1
+----> 1 env = make_vec_env('HoundsAndHareEnv-v0', n_envs=1)
+
+File ~\anaconda3\Lib\site-packages\stable_baselines3\common\env_util.py:125, in make_vec_env(env_id, n_envs, seed, start_index, monitor_dir, wrapper_class, env_kwargs, vec_env_cls, vec_env_kwargs, monitor_kwargs, wrapper_kwargs)
+    121 if vec_env_cls is None:
+    122     # Default: use a DummyVecEnv
+    123     vec_env_cls = DummyVecEnv
+--> 125 vec_env = vec_env_cls([make_env(i + start_index) for i in range(n_envs)], **vec_env_kwargs)
+    126 # Prepare the seeds for the first reset
+    127 vec_env.seed(seed)
+
+File ~\anaconda3\Lib\site-packages\stable_baselines3\common\vec_env\dummy_vec_env.py:30, in DummyVecEnv.__init__(self, env_fns)
+     29 def __init__(self, env_fns: List[Callable[[], gym.Env]]):
+---> 30     self.envs = [_patch_env(fn()) for fn in env_fns]
+     31     if len(set([id(env.unwrapped) for env in self.envs])) != len(self.envs):
+     32         raise ValueError(
+     33             "You tried to create multiple environments, but the function to create them returned the same instance "
+     34             "instead of creating different objects. "
+   (...)
+     39             "Please read https://github.com/DLR-RM/stable-baselines3/issues/1151 for more information."
+     40         )
+
+File ~\anaconda3\Lib\site-packages\stable_baselines3\common\vec_env\dummy_vec_env.py:30, in <listcomp>(.0)
+     29 def __init__(self, env_fns: List[Callable[[], gym.Env]]):
+---> 30     self.envs = [_patch_env(fn()) for fn in env_fns]
+     31     if len(set([id(env.unwrapped) for env in self.envs])) != len(self.envs):
+     32         raise ValueError(
+     33             "You tried to create multiple environments, but the function to create them returned the same instance "
+     34             "instead of creating different objects. "
+   (...)
+     39             "Please read https://github.com/DLR-RM/stable-baselines3/issues/1151 for more information."
+     40         )
+
+File ~\anaconda3\Lib\site-packages\stable_baselines3\common\env_util.py:94, in make_vec_env.<locals>.make_env.<locals>._init()
+     92 kwargs.update(env_kwargs)
+     93 try:
+---> 94     env = gym.make(env_id, **kwargs)  # type: ignore[arg-type]
+     95 except TypeError:
+     96     env = gym.make(env_id, **env_kwargs)
+
+File ~\anaconda3\Lib\site-packages\gymnasium\envs\registration.py:741, in make(id, max_episode_steps, autoreset, apply_api_compatibility, disable_env_checker, **kwargs)
+    738     assert isinstance(id, str)
+    740     # The environment name can include an unloaded module in "module:env_name" style
+--> 741     env_spec = _find_spec(id)
+    743 assert isinstance(env_spec, EnvSpec)
+    745 # Update the env spec kwargs with the `make` kwargs
+
+File ~\anaconda3\Lib\site-packages\gymnasium\envs\registration.py:527, in _find_spec(env_id)
+    521     logger.warn(
+    522         f"Using the latest versioned environment `{new_env_id}` "
+    523         f"instead of the unversioned environment `{env_name}`."
+    524     )
+    526 if env_spec is None:
+--> 527     _check_version_exists(ns, name, version)
+    528     raise error.Error(
+    529         f"No registered env with id: {env_name}. Did you register it, or import the package that registers it? Use `gymnasium.pprint_registry()` to see all of the registered environments."
+    530     )
+    532 return env_spec
+
+File ~\anaconda3\Lib\site-packages\gymnasium\envs\registration.py:393, in _check_version_exists(ns, name, version)
+    390 if get_env_id(ns, name, version) in registry:
+    391     return
+--> 393 _check_name_exists(ns, name)
+    394 if version is None:
+    395     return
+
+File ~\anaconda3\Lib\site-packages\gymnasium\envs\registration.py:370, in _check_name_exists(ns, name)
+    367 namespace_msg = f" in namespace {ns}" if ns else ""
+    368 suggestion_msg = f" Did you mean: `{suggestion[0]}`?" if suggestion else ""
+--> 370 raise error.NameNotFound(
+    371     f"Environment `{name}` doesn't exist{namespace_msg}.{suggestion_msg}"
+    372 )
+
+NameNotFound: Environment `HoundsAndHareEnv` doesn't exist.
+
